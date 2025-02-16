@@ -9,18 +9,14 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
+	ReadBufferSize:  8192,
 	WriteBufferSize: 1024,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-const (
-	MAX_NUM_OF_POINTS int32 = 10_000
-)
-
 type SolveCPRequest struct {
-	Metod  string                     `json:"method"`
-	Points [MAX_NUM_OF_POINTS]float64 `json:"points"`
+	Method string    `json:"method"`
+	Points []float64 `json:"points"`
 }
 
 type SolveCPResponse struct {
@@ -41,7 +37,6 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("WebSocket Upgrade Error:", err)
 		return
 	}
-	defer conn.Close()
 
 	log.Printf("Client connected: %s\n", r.RemoteAddr)
 
@@ -55,21 +50,24 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Solve the closest pair problem
-		if req.Metod == "dnc" {
+		if req.Method == "dnc" {
 			go func() {
 				index1, index2 := DnCSolve(req.Points[:])
-				sendResponse(req.Metod, conn, [2]int32{index1, index2})
+				sendResponse(req.Method, conn, [2]int32{index1, index2})
 			}()
-		} else if req.Metod == "bruteforce" {
+		} else if req.Method == "bruteforce" {
 			go func() {
 				index1, index2 := BruteforceSolve(req.Points[:])
-				sendResponse(req.Metod, conn, [2]int32{index1, index2})
+				sendResponse(req.Method, conn, [2]int32{index1, index2})
 			}()
 		} else {
-			log.Println("Invalid method:", req.Metod)
+			log.Println("Invalid method:", req.Method)
 			break
 		}
 	}
+
+	log.Printf("Client disconnected: %s\n", r.RemoteAddr)
+	conn.Close()
 }
 
 func sendResponse(method string, conn *websocket.Conn, indexes [2]int32) {
@@ -77,7 +75,6 @@ func sendResponse(method string, conn *websocket.Conn, indexes [2]int32) {
 	err := conn.WriteJSON(response)
 	if err != nil {
 		log.Println("Error writing WebSocket response:", err)
-		return
 	}
 }
 
