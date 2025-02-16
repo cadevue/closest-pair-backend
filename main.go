@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -83,6 +84,7 @@ Solve closest pair problem using divide and conquer algorithm
 returns the index of the closest pair
 */
 func DnCSolve(points []float64) (int32, int32) {
+	time.Sleep(5 * time.Second)
 	return 0, 1
 }
 
@@ -91,5 +93,6 @@ Solve closest pair problem using brute force algorithm
 returns the index of the closest pair
 */
 func BruteforceSolve(points []float64) (int32, int32) {
+	time.Sleep(10 * time.Second)
 	return 0, 1
 }
