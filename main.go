@@ -19,10 +19,12 @@ const (
 )
 
 type SolveCPRequest struct {
+	Metod  string                     `json:"method"`
 	Points [MAX_NUM_OF_POINTS]float64 `json:"points"`
 }
 
 type SolveCPResponse struct {
+	Method  string   `json:"method"`
 	Indexes [2]int32 `json:"indexes"`
 }
 
@@ -43,9 +45,36 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Client connected: %s\n", r.RemoteAddr)
 
-	// Example: Send a JSON response over WebSocket (not HTTP)
-	response := SolveCPResponse{Indexes: [2]int32{0, 1}}
-	err = conn.WriteJSON(response)
+	for {
+		// Read message from client
+		req := SolveCPRequest{}
+		err := conn.ReadJSON(&req)
+		if err != nil {
+			log.Println("Error reading WebSocket request:", err)
+			break
+		}
+
+		// Solve the closest pair problem
+		if req.Metod == "dnc" {
+			go func() {
+				index1, index2 := DnCSolve(req.Points[:])
+				sendResponse(req.Metod, conn, [2]int32{index1, index2})
+			}()
+		} else if req.Metod == "bruteforce" {
+			go func() {
+				index1, index2 := BruteforceSolve(req.Points[:])
+				sendResponse(req.Metod, conn, [2]int32{index1, index2})
+			}()
+		} else {
+			log.Println("Invalid method:", req.Metod)
+			break
+		}
+	}
+}
+
+func sendResponse(method string, conn *websocket.Conn, indexes [2]int32) {
+	response := SolveCPResponse{Method: method, Indexes: indexes}
+	err := conn.WriteJSON(response)
 	if err != nil {
 		log.Println("Error writing WebSocket response:", err)
 		return
