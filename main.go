@@ -1,10 +1,10 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -16,8 +16,9 @@ var upgrader = websocket.Upgrader{
 }
 
 type SolveCPRequest struct {
-	Method string    `json:"method"`
-	Points []float64 `json:"points"`
+	Method    string    `json:"method"`
+	Dimension int32     `json:"dimension"`
+	Points    []float64 `json:"points"`
 }
 
 type SolveCPResponse struct {
@@ -50,20 +51,31 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
+		// Validate the points
+		err = isPointsValid(req.Points, int(req.Dimension))
+		if err != nil {
+			log.Println("Invalid points:", err)
+			continue
+		}
+
+		log.Printf("Received request: Points : %d, Address : %s, Method : %s\n", len(req.Points)/int(req.Dimension), r.RemoteAddr, req.Method)
+
 		// Solve the closest pair problem
 		if req.Method == "dnc" {
 			go func() {
-				index1, index2 := DnCSolve(req.Points[:])
+				index1, index2 := DnCSolve(req.Points, req.Dimension)
 				sendResponse(req.Method, conn, [2]int32{index1, index2})
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
 			}()
 		} else if req.Method == "bruteforce" {
 			go func() {
-				index1, index2 := BruteforceSolve(req.Points[:])
+				index1, index2 := BruteforceSolve(req.Points, req.Dimension)
 				sendResponse(req.Method, conn, [2]int32{index1, index2})
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
 			}()
 		} else {
 			log.Println("Invalid method:", req.Method)
-			break
+			continue
 		}
 	}
 
@@ -79,20 +91,14 @@ func sendResponse(method string, conn *websocket.Conn, indexes [2]int32) {
 	}
 }
 
-/*
-Solve closest pair problem using divide and conquer algorithm
-returns the index of the closest pair
-*/
-func DnCSolve(points []float64) (int32, int32) {
-	time.Sleep(5 * time.Second)
-	return 0, 1
-}
+func isPointsValid(points []float64, dimension int) error {
+	if len(points)%dimension != 0 {
+		return errors.New("the number of points is not a multiple of the dimension")
+	}
 
-/*
-Solve closest pair problem using brute force algorithm
-returns the index of the closest pair
-*/
-func BruteforceSolve(points []float64) (int32, int32) {
-	time.Sleep(10 * time.Second)
-	return 0, 1
+	if len(points) < 2*dimension {
+		return errors.New("the number of points is less than 2")
+	}
+
+	return nil
 }
