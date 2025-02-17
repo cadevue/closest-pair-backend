@@ -97,9 +97,9 @@ func isPointsValid(points []float64, dimension int) error {
 		return errors.New("the number of points is less than 2")
 	}
 
+	if len(points)/dimension > 100000 {
+		return errors.New("the number of points is greater than 100000")
+	}
+
 	return nil
 }
-
-// func specHandler(w http.ResponseWriter, r *http.Request) {
-
-// }
