@@ -7,8 +7,10 @@ type SolveCPRequest struct {
 }
 
 type SolveCPResponse struct {
-	Method  string   `json:"method"`
-	Indexes [2]int32 `json:"indexes"`
+	Method            string   `json:"method"`
+	Indexes           [2]int32 `json:"indexes"`
+	Distance          float64  `json:"distance"`
+	NumOfEuclideanOps int32    `json:"numOfEuclideanOps"`
 }
 
 type SpecResponse struct {

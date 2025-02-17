@@ -4,18 +4,32 @@ import (
 	"math"
 )
 
+type SolveData struct {
+	Points            []float64
+	Dimension         int32
+	NumOfEuclideanOps int32
+}
+
+type SolveResult struct {
+	Indexes           [2]int32
+	Distance          float64
+	NumOfEuclideanOps int32
+}
+
 /*
 Solve closest pair problem using brute force algorithm
 returns the index of the closest pair
 */
-func BruteforceSolve(points []float64, dimension int32) (int32, int32) {
-	var minDist float64 = getEuclideanDistance(points[:dimension], points[dimension:2*dimension])
+func BruteforceSolve(points []float64, dimension int32) SolveResult {
+	var data SolveData = SolveData{Points: points, Dimension: dimension, NumOfEuclideanOps: 0}
+
+	var minDist float64 = getEuclideanDistance(data.Points[:dimension], data.Points[dimension:2*dimension], &data)
 	var index1, index2 int32 = 0, 1
-	var length int32 = int32(len(points))
+	var length int32 = int32(len(data.Points))
 
 	for i := int32(0); i < length; i += dimension {
 		for j := i + dimension; j < length; j += dimension {
-			dist := getEuclideanDistance(points[i:i+dimension], points[j:j+dimension])
+			dist := getEuclideanDistance(data.Points[i:i+dimension], data.Points[j:j+dimension], &data)
 			if dist < minDist {
 				minDist = dist
 				index1 = int32(i / dimension)
@@ -24,13 +38,17 @@ func BruteforceSolve(points []float64, dimension int32) (int32, int32) {
 		}
 	}
 
-	return index1, index2
+	return SolveResult{Indexes: [2]int32{index1, index2}, Distance: minDist, NumOfEuclideanOps: data.NumOfEuclideanOps}
 }
 
-func BruteForceSolvePartial(points *[]float64, l int32, r int32, dimension int32) (int32, int32, float64) {
+func BruteForceSolvePartial(data *SolveData, l int32, r int32) (int32, int32, float64) {
+	points := &data.Points
+	dimension := data.Dimension
+
 	var minDist float64 = getEuclideanDistance(
 		(*points)[l*dimension:l*dimension+dimension],
 		(*points)[(l+1)*dimension:(l+1)*dimension+dimension],
+		data,
 	)
 
 	var index1, index2 int32 = l, l + 1
@@ -40,6 +58,7 @@ func BruteForceSolvePartial(points *[]float64, l int32, r int32, dimension int32
 			dist := getEuclideanDistance(
 				(*points)[i*dimension:i*dimension+dimension],
 				(*points)[j*dimension:j*dimension+dimension],
+				data,
 			)
 
 			if dist < minDist {
@@ -57,40 +76,46 @@ func BruteForceSolvePartial(points *[]float64, l int32, r int32, dimension int32
 Solve closest pair problem using divide and conquer algorithm
 returns the index of the closest pair
 */
-func DnCSolve(points []float64, dimension int32) (int32, int32) {
+func DnCSolve(points []float64, dimension int32) SolveResult {
+	var data SolveData = SolveData{Points: points, Dimension: dimension, NumOfEuclideanOps: 0}
+
 	// Sort the points by x-coordinate
-	count := int32(int32(len(points)) / dimension)
+	count := int32(int32(len(data.Points)) / dimension)
 
 	var indexMap []int32 = make([]int32, count)
 	for i := int32(0); i < count; i++ {
 		indexMap[i] = i
 	}
 
-	quickSort(&points, &indexMap, 0, count-1, 0, dimension)
+	quickSort(&data.Points, &indexMap, 0, count-1, 0, dimension)
 
 	// Solve the problem
-	index1, index2, _ := DnCSolvePartial(&points, 0, count-1, dimension)
+	index1, index2, dist := DnCSolvePartial(&data, 0, count-1)
 	index1, index2 = indexMap[index1], indexMap[index2]
 
-	return index1, index2
+	return SolveResult{Indexes: [2]int32{index1, index2}, Distance: dist, NumOfEuclideanOps: data.NumOfEuclideanOps}
 
 }
 
-func DnCSolvePartial(points *[]float64, l int32, r int32, dimension int32) (int32, int32, float64) {
+func DnCSolvePartial(data *SolveData, l int32, r int32) (int32, int32, float64) {
 	if r-l < 3 {
-		return BruteForceSolvePartial(points, l, r, dimension)
+		leftIndex, rightIndex, dist := BruteForceSolvePartial(data, l, r)
+		return leftIndex, rightIndex, dist
 	}
+
+	points := &data.Points
+	dimension := data.Dimension
 
 	mid := (l + r) / 2
 
 	// Recursively solve the subproblems
-	leftIndex1, leftIndex2, leftDist := DnCSolvePartial(points, l, mid, dimension)
-	rightIndex1, rightIndex2, rightDist := DnCSolvePartial(points, mid+1, r, dimension)
+	leftIndex1, leftIndex2, leftDist := DnCSolvePartial(data, l, mid)
+	rightIndex1, rightIndex2, rightDist := DnCSolvePartial(data, mid+1, r)
 
 	// Find the minimum distance
 	var minDist float64
 	var minIndex1, minIndex2 int32
-	if leftDist < rightDist {
+	if leftDist <= rightDist {
 		minDist = leftDist
 		minIndex1, minIndex2 = leftIndex1, leftIndex2
 	} else {
@@ -102,30 +127,30 @@ func DnCSolvePartial(points *[]float64, l int32, r int32, dimension int32) (int3
 	var stripMid float64 = ((*points)[mid*dimension] + (*points)[(mid+1)*dimension]) / 2
 
 	// Find the points in the strip
-	var leftStrip, rightStrip []float64
+	var stripL, stripR int32 = -1, -1
 
 	for i := l; i <= r; i++ {
 		if math.Abs((*points)[i*dimension]-stripMid) < minDist {
-			if (*points)[i*dimension] < stripMid {
-				leftStrip = append(leftStrip, (*points)[i*dimension:(i+1)*dimension]...)
-			} else {
-				rightStrip = append(rightStrip, (*points)[i*dimension:(i+1)*dimension]...)
+			if i <= mid && stripL == -1 {
+				stripL = i
+			} else if i > mid {
+				stripR = i
 			}
 		}
 	}
 
 	// Calculate the minimum distance in the strip
-	for i := int32(0); i < int32(len(leftStrip))/dimension; i++ {
-		for j := int32(0); j < int32(len(rightStrip))/dimension; j++ {
+	for i := stripL; i <= mid; i++ {
+		for j := mid + 1; j <= stripR; j++ {
 			dist := getEuclideanDistance(
-				leftStrip[i*dimension:(i+1)*dimension],
-				rightStrip[j*dimension:(j+1)*dimension],
+				(*points)[i*dimension:i*dimension+dimension],
+				(*points)[j*dimension:j*dimension+dimension],
+				data,
 			)
 
 			if dist < minDist {
 				minDist = dist
-				minIndex1 = i
-				minIndex2 = j
+				minIndex1, minIndex2 = i, j
 			}
 		}
 	}
@@ -134,7 +159,9 @@ func DnCSolvePartial(points *[]float64, l int32, r int32, dimension int32) (int3
 }
 
 /* Distance */
-func getEuclideanDistance(p1 []float64, p2 []float64) float64 {
+func getEuclideanDistance(p1 []float64, p2 []float64, data *SolveData) float64 {
+	data.NumOfEuclideanOps++
+
 	var sum float64
 	for i := 0; i < len(p1); i++ {
 		sum += (p1[i] - p2[i]) * (p1[i] - p2[i])

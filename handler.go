@@ -44,15 +44,15 @@ func solveHandler(w http.ResponseWriter, r *http.Request) {
 		// Solve the closest pair problem
 		if req.Method == "dnc" {
 			go func() {
-				index1, index2 := DnCSolve(req.Points, req.Dimension)
-				sendSolveResponse(req.Method, conn, [2]int32{index1, index2})
-				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
+				result := DnCSolve(req.Points, req.Dimension)
+				sendSolveResponse(req.Method, conn, result)
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, result.Indexes[0], result.Indexes[1], req.Method)
 			}()
 		} else if req.Method == "bruteforce" {
 			go func() {
-				index1, index2 := BruteforceSolve(req.Points, req.Dimension)
-				sendSolveResponse(req.Method, conn, [2]int32{index1, index2})
-				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
+				result := BruteforceSolve(req.Points, req.Dimension)
+				sendSolveResponse(req.Method, conn, result)
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, result.Indexes[0], result.Indexes[1], req.Method)
 			}()
 		} else {
 			log.Println("Invalid method:", req.Method)
@@ -64,8 +64,8 @@ func solveHandler(w http.ResponseWriter, r *http.Request) {
 	conn.Close()
 }
 
-func sendSolveResponse(method string, conn *websocket.Conn, indexes [2]int32) {
-	response := SolveCPResponse{Method: method, Indexes: indexes}
+func sendSolveResponse(method string, conn *websocket.Conn, result SolveResult) {
+	response := SolveCPResponse{Method: method, Indexes: result.Indexes, Distance: result.Distance, NumOfEuclideanOps: result.NumOfEuclideanOps}
 	err := conn.WriteJSON(response)
 	if err != nil {
 		log.Println("Error writing WebSocket response:", err)
