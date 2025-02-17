@@ -6,10 +6,6 @@ import (
 	"net/http"
 )
 
-// "fmt"
-// "log"
-// "net/http"
-
 func main() {
 	http.HandleFunc("/", solveHandler)
 	// http.HandleFunc("/spec", specHandler)
