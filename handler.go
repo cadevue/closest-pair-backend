@@ -14,7 +14,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func mainHandler(w http.ResponseWriter, r *http.Request) {
+func solveHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket Upgrade Error:", err)
@@ -45,13 +45,13 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		if req.Method == "dnc" {
 			go func() {
 				index1, index2 := DnCSolve(req.Points, req.Dimension)
-				sendResponse(req.Method, conn, [2]int32{index1, index2})
+				sendSolveResponse(req.Method, conn, [2]int32{index1, index2})
 				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
 			}()
 		} else if req.Method == "bruteforce" {
 			go func() {
 				index1, index2 := BruteforceSolve(req.Points, req.Dimension)
-				sendResponse(req.Method, conn, [2]int32{index1, index2})
+				sendSolveResponse(req.Method, conn, [2]int32{index1, index2})
 				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, index1, index2, req.Method)
 			}()
 		} else {
@@ -64,7 +64,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	conn.Close()
 }
 
-func sendResponse(method string, conn *websocket.Conn, indexes [2]int32) {
+func sendSolveResponse(method string, conn *websocket.Conn, indexes [2]int32) {
 	response := SolveCPResponse{Method: method, Indexes: indexes}
 	err := conn.WriteJSON(response)
 	if err != nil {
@@ -83,3 +83,7 @@ func isPointsValid(points []float64, dimension int) error {
 
 	return nil
 }
+
+// func specHandler(w http.ResponseWriter, r *http.Request) {
+
+// }
