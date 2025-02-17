@@ -4,10 +4,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/didip/tollbooth/v8"
+	"github.com/didip/tollbooth/v8/limiter"
 )
 
 func main() {
-	http.HandleFunc("/", solveHandler)
+	// Rate limiting
+	lmt := tollbooth.NewLimiter(100, &limiter.ExpirableOptions{DefaultExpirationTTL: time.Hour})
+	lmt.SetIPLookup(limiter.IPLookup{
+		Name:           "X-Forwarded-For",
+		IndexFromRight: 0,
+	})
+	lmt.SetMessage("You have reached maximum request limit per hour.")
+
+	http.Handle("/", tollbooth.LimitHandler(lmt, http.HandlerFunc(solveHandler)))
 
 	fmt.Println()
 	log.Print("Server started on\nws://localhost:8080\n\n")
