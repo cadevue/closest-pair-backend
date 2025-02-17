@@ -1,5 +1,6 @@
 package main
 
+/* Request-Response */
 type SolveCPRequest struct {
 	Method    string    `json:"method"`
 	Dimension int32     `json:"dimension"`
@@ -11,6 +12,7 @@ type SolveCPResponse struct {
 	Indexes           [2]int32 `json:"indexes"`
 	Distance          float64  `json:"distance"`
 	NumOfEuclideanOps int32    `json:"numOfEuclideanOps"`
+	ExecutionTime     float64  `json:"executionTime"`
 }
 
 type SpecResponse struct {
@@ -19,4 +21,18 @@ type SpecResponse struct {
 	Memory string `json:"memory"`
 	OS     string `json:"os"`
 	Disk   string `json:"disk"`
+}
+
+/* Internal Data */
+type SolveData struct {
+	Points            []float64
+	Dimension         int32
+	NumOfEuclideanOps int32
+}
+
+type SolveResult struct {
+	Indexes           [2]int32
+	Distance          float64
+	NumOfEuclideanOps int32
+	ExecutionTime     float64
 }

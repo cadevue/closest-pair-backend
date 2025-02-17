@@ -4,24 +4,15 @@ import (
 	"math"
 )
 
-type SolveData struct {
-	Points            []float64
-	Dimension         int32
-	NumOfEuclideanOps int32
-}
-
-type SolveResult struct {
-	Indexes           [2]int32
-	Distance          float64
-	NumOfEuclideanOps int32
-}
-
 /*
 Solve closest pair problem using brute force algorithm
 returns the index of the closest pair
 */
 func BruteforceSolve(points []float64, dimension int32) SolveResult {
 	var data SolveData = SolveData{Points: points, Dimension: dimension, NumOfEuclideanOps: 0}
+
+	timer := ExecTimer{}
+	timer.Start()
 
 	var minDist float64 = getEuclideanDistance(data.Points[:dimension], data.Points[dimension:2*dimension], &data)
 	var index1, index2 int32 = 0, 1
@@ -38,7 +29,14 @@ func BruteforceSolve(points []float64, dimension int32) SolveResult {
 		}
 	}
 
-	return SolveResult{Indexes: [2]int32{index1, index2}, Distance: minDist, NumOfEuclideanOps: data.NumOfEuclideanOps}
+	timer.Stop()
+
+	return SolveResult{
+		Indexes:           [2]int32{index1, index2},
+		Distance:          minDist,
+		NumOfEuclideanOps: data.NumOfEuclideanOps,
+		ExecutionTime:     timer.GetElapsedTime().Seconds(),
+	}
 }
 
 func BruteForceSolvePartial(data *SolveData, l int32, r int32) (int32, int32, float64) {
@@ -79,6 +77,9 @@ returns the index of the closest pair
 func DnCSolve(points []float64, dimension int32) SolveResult {
 	var data SolveData = SolveData{Points: points, Dimension: dimension, NumOfEuclideanOps: 0}
 
+	timer := ExecTimer{}
+	timer.Start()
+
 	// Sort the points by x-coordinate
 	count := int32(int32(len(data.Points)) / dimension)
 
@@ -93,8 +94,14 @@ func DnCSolve(points []float64, dimension int32) SolveResult {
 	index1, index2, dist := DnCSolvePartial(&data, 0, count-1)
 	index1, index2 = indexMap[index1], indexMap[index2]
 
-	return SolveResult{Indexes: [2]int32{index1, index2}, Distance: dist, NumOfEuclideanOps: data.NumOfEuclideanOps}
+	timer.Stop()
 
+	return SolveResult{
+		Indexes:           [2]int32{index1, index2},
+		Distance:          dist,
+		NumOfEuclideanOps: data.NumOfEuclideanOps,
+		ExecutionTime:     timer.GetElapsedTime().Seconds(),
+	}
 }
 
 func DnCSolvePartial(data *SolveData, l int32, r int32) (int32, int32, float64) {

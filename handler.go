@@ -46,13 +46,23 @@ func solveHandler(w http.ResponseWriter, r *http.Request) {
 			go func() {
 				result := DnCSolve(req.Points, req.Dimension)
 				sendSolveResponse(req.Method, conn, result)
-				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, result.Indexes[0], result.Indexes[1], req.Method)
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s, Execution Time : %f\n",
+					r.RemoteAddr,
+					result.Indexes[0], result.Indexes[1],
+					req.Method,
+					result.ExecutionTime,
+				)
 			}()
 		} else if req.Method == "bruteforce" {
 			go func() {
 				result := BruteforceSolve(req.Points, req.Dimension)
 				sendSolveResponse(req.Method, conn, result)
-				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s\n", r.RemoteAddr, result.Indexes[0], result.Indexes[1], req.Method)
+				log.Printf("Response sent: To : %s, Indexes : (%d, %d), Method : %s, Execution Time : %f\n",
+					r.RemoteAddr,
+					result.Indexes[0], result.Indexes[1],
+					req.Method,
+					result.ExecutionTime,
+				)
 			}()
 		} else {
 			log.Println("Invalid method:", req.Method)
@@ -65,7 +75,13 @@ func solveHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendSolveResponse(method string, conn *websocket.Conn, result SolveResult) {
-	response := SolveCPResponse{Method: method, Indexes: result.Indexes, Distance: result.Distance, NumOfEuclideanOps: result.NumOfEuclideanOps}
+	response := SolveCPResponse{
+		Method:            method,
+		Indexes:           result.Indexes,
+		Distance:          result.Distance,
+		NumOfEuclideanOps: result.NumOfEuclideanOps,
+		ExecutionTime:     result.ExecutionTime,
+	}
 	err := conn.WriteJSON(response)
 	if err != nil {
 		log.Println("Error writing WebSocket response:", err)
