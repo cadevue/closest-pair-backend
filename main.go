@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cadevue/closest-pair-backend/internal"
+
 	"github.com/didip/tollbooth/v8"
 	"github.com/didip/tollbooth/v8/limiter"
 )
@@ -19,7 +21,7 @@ func main() {
 	})
 	lmt.SetMessage("You have reached maximum request limit per hour.")
 
-	http.Handle("/", tollbooth.LimitHandler(lmt, http.HandlerFunc(solveHandler)))
+	http.Handle("/", tollbooth.LimitHandler(lmt, http.HandlerFunc(internal.SolveHandler)))
 
 	fmt.Println()
 	log.Print("Server started on\nws://localhost:8080\n\n")

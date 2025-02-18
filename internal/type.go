@@ -1,4 +1,4 @@
-package main
+package internal
 
 /* Request-Response */
 type SolveCPRequest struct {

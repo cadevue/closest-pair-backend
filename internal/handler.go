@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"errors"
@@ -12,12 +12,12 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  8192,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return r.Header.Get("Origin") == "http://localhost:5173"
+		return true
+		// return r.Header.Get("Origin") == "http://localhost:5173"
 	},
 }
 
-func solveHandler(w http.ResponseWriter, r *http.Request) {
-
+func SolveHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("WebSocket Upgrade Error:", err)
