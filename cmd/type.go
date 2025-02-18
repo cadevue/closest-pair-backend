@@ -1,4 +1,4 @@
-package internal
+package cmd
 
 /* Request-Response */
 type SolveCPRequest struct {
