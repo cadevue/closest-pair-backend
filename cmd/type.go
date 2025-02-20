@@ -11,7 +11,7 @@ type SolveCPResponse struct {
 	Method            string   `json:"method"`
 	Indexes           [2]int32 `json:"indexes"`
 	Distance          float64  `json:"distance"`
-	NumOfEuclideanOps int32    `json:"numOfEuclideanOps"`
+	NumOfEuclideanOps int64    `json:"numOfEuclideanOps"`
 	ExecutionTime     float64  `json:"executionTime"`
 }
 
@@ -27,12 +27,12 @@ type SpecResponse struct {
 type SolveData struct {
 	Points            []float64
 	Dimension         int32
-	NumOfEuclideanOps int32
+	NumOfEuclideanOps int64
 }
 
 type SolveResult struct {
 	Indexes           [2]int32
 	Distance          float64
-	NumOfEuclideanOps int32
+	NumOfEuclideanOps int64
 	ExecutionTime     float64
 }
