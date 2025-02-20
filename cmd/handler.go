@@ -13,8 +13,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  8192,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
-		// return r.Header.Get("Origin") == "http://localhost:5173"
+		return r.Header.Get("Origin") == "https://closest-pair-frontend.pages.dev"
 	},
 }
 
