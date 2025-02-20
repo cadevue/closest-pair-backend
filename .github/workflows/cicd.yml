@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Deploy Docker Image
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up Docker Buildx # Still unsure about this effect.
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build and tag Docker image
@@ -29,3 +29,25 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/closestpair-be:latest
+
+  deploy:
+    needs: build
+    runs-on: cadevue-station
+
+    steps:
+      - name: Pull latest Docker image
+        run: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/closestpair-be:latest
+
+      - name: Stop and remove old container (if exists)
+        run: |
+          docker stop closestpair-be || true
+          docker rm closestpair-be || true
+
+      - name: Run new container
+        run: |
+          docker run -d --restart unless-stopped -p 8080:8080 --name closestpair-be ${{ secrets.DOCKER_USERNAME }}/closestpair-be:latest
+
+      - name: Clean up old images
+        run: |
+          docker image prune -f

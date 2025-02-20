@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,6 +28,8 @@ func SolveHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Client connected: %s\n", r.RemoteAddr)
 
+	conn.SetReadDeadline(time.Now().Add(90 * time.Second))
+
 	for {
 		// Read message from client
 		req := SolveCPRequest{}
@@ -35,6 +38,8 @@ func SolveHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error reading WebSocket request:", err)
 			break
 		}
+
+		conn.SetReadDeadline(time.Now().Add(90 * time.Second))
 
 		// Validate the points
 		err = isPointsValid(req.Points, int(req.Dimension))
